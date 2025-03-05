@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #fafafa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            width: 360px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #dbdbdb;
+            border-radius: 8px;
+            background: #fafafa;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #0095f6;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            background: #0095f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #0077cc;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f1f1f1;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            width: 120px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Калькулятор</h1>
+
+        <input type="text" id="expression" placeholder="Например: 2 + 2 * 2">
+        <button onclick="calculateExpression()">Вычислить</button>
+
+        <input type="text" id="expressionId" placeholder="Введите ID">
+        <button onclick="checkExpression()">Проверить</button>
+
+        <button onclick="fetchAllExpressions()">Все выражения</button>
+
+        <div class="result" id="result">Тут будет результат</div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8081/api/v1";
+
+        async function calculateExpression() {
+            const expression = document.getElementById("expression").value;
+            if (!expression.trim()) {
+                alert("Введите выражение!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/calculate`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ expression }),
+                });
+
+                const data = await response.json();
+                document.getElementById("result").innerHTML = response.ok 
+                    ? `<p>Выражение добавлено. ID: <b>${data.id}</b></p>` 
+                    : `<p style="color: red;">Ошибка: ${data.error}</p>`;
+            } catch (error) {
+                document.getElementById("result").innerHTML = `<p style="color: red;">Ошибка соединения</p>`;
+            }
+        }
+
+        async function checkExpression() {
+            const expressionId = document.getElementById("expressionId").value;
+            if (!expressionId.trim()) {
+                alert("Введите ID!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/expressions/${expressionId}`);
+                const data = await response.json();
+                document.getElementById("result").innerHTML = response.ok 
+                    ? `<p>ID: <b>${data.expression.id}</b></p>
+                       <p>Статус: <b>${data.expression.status}</b></p>
+                       <p>Результат: <b>${data.expression.result || "Ожидается..."}</b></p>` 
+                    : `<p style="color: red;">Ошибка: ${data.error}</p>`;
+            } catch (error) {
+                document.getElementById("result").innerHTML = `<p style="color: red;">Ошибка соединения</p>`;
+            }
+        }
+
+        async function fetchAllExpressions() {
+            try {
+                const response = await fetch(`${API_URL}/expressions`);
+                const data = await response.json();
+                let html = "<h3>Список выражений:</h3><ul>";
+                data.expressions.forEach(exp => {
+                    html += `<li>ID: <b>${exp.id}</b> | Статус: <b>${exp.status}</b> | Результат: <b>${exp.result || "Ожидается"}</b></li>`;
+                });
+                html += "</ul>";
+                document.getElementById("result").innerHTML = html;
+            } catch (error) {
+                document.getElementById("result").innerHTML = `<p style="color: red;">Ошибка соединения</p>`;
+            }
+        }
+    </script>
+
+</body>
+</html>
